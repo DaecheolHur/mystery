@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="선택에 따라 결말이 갈리는 텍스트 추리 게임, 청색 색인.">
+<title>청색 색인 - 텍스트 추리</title>
+<style>
+:root{--bg:#14110e;--panel:#221c17;--ink:#f4ead8;--muted:#c8b79a;--line:#3b3128;--accent:#e0a15a}
+*{box-sizing:border-box}
+body{margin:0;min-height:100vh;background:radial-gradient(circle at top,#2a211a,var(--bg) 55%);color:var(--ink);font-family:"Georgia","Noto Serif KR",serif}
+.wrap{max-width:980px;margin:0 auto;padding:28px 16px 48px}
+header{display:flex;justify-content:space-between;gap:16px;align-items:end;margin-bottom:18px}
+h1{margin:0;font-size:34px;font-weight:700}header p{margin:4px 0 0;color:var(--muted)}
+button{font:inherit}
+.restart{border:1px solid var(--line);background:transparent;color:var(--ink);border-radius:999px;padding:8px 12px;cursor:pointer}
+.layout{display:grid;grid-template-columns:minmax(0,1fr) 250px;gap:14px}
+.story,.clues{background:rgba(34,28,23,.92);border:1px solid var(--line);border-radius:18px}
+.story{padding:26px}
+#scene{font-size:18px;line-height:1.85;white-space:pre-wrap}
+.choices{display:flex;flex-direction:column;gap:8px;margin-top:22px}
+.choices button{text-align:left;background:#31281f;color:var(--ink);border:1px solid #4a3d31;border-radius:12px;padding:12px 14px;cursor:pointer}
+.choices button:hover{border-color:var(--accent)}
+.clues{padding:18px}
+.clues h2{margin:0 0 12px;font-size:16px}
+.clues li{margin:8px 0;color:var(--muted);line-height:1.5}
+.empty{color:var(--muted)}
+@media(max-width:760px){.layout{grid-template-columns:1fr}h1{font-size:28px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+<div>
+<h1>청색 색인</h1>
+<p>사라지기 전, 책의 첫 장이 찢겨 있었다.</p>
+</div>
+<button class="restart" type="button">처음부터</button>
+</header>
+<div class="layout">
+<article class="story">
+<div id="scene"></div>
+<div id="choices" class="choices"></div>
+</article>
+<aside class="clues">
+<h2>단서</h2>
+<ul id="clueList"><li class="empty">아직 찾은 단서가 없습니다.</li></ul>
+</aside>
+</div>
+</div>
+<script>
+const clues={
+ page:"찢긴 문장: 색인은 순서를 속인다.",
+ ink:"비평가의 차잔에 푸른 잉크가 남아 있다.",
+ log:"1시 17분, 문도윤이 열람실에 가장 먼저 들어왔다.",
+ call:"유가은은 1시 40분까지 복도에서 통화 중이었다."
+};
+const scenes={
+ start:{
+  text:"새벽 1시. 시립 기억 도서관의 유리 상자가 비어 있다.\n폐가 목록에만 남아 있던 『청색 색인』이 사라졌다.\n관장은 출입문을 잠그고 당신에게 한 시간을 준다.\n안에 남은 사람은 시인 한서진, 비평가 문도윤, 학생 유가은이다.",
+  choices:[
+   ["열람 테이블을 살핀다","tables"],
+   ["차 탁자로 간다","tea"],
+   ["출입 기록을 확인한다","records"]
+  ]
+ },
+ tables:{
+  text:"램프 아래에 노트 한 장이 남아 있다. 첫 문장이 찢겨 나갔고, 아랫줄만 읽힌다.\n\n“색인은 순서를 속인다.”\n\n창가의 한서진이 펜을 내려놓으며 당신을 본다.",
+  set:["page"],
+  choices:[
+   ["한서진에게 묻는다","poet"],
+   ["서고 중앙으로 돌아간다","hall"]
+  ]
+ },
+ poet:{
+  text:"한서진이 낮게 말한다.\n\n“나는 그 문장을 시에 베끼려고 왔을 뿐입니다. 책은 제가 도착했을 때 이미 없었습니다. 문도윤 씨가 색인 순서가 틀렸다고 크게 혼잣말을 하더군요.”",
+  choices:[["서고 중앙으로 돌아간다","hall"]]
+ },
+ tea:{
+  text:"차잔이 두 개 남아 있다. 하나는 식어 있고, 다른 잔의 가장자리에는 푸른 잉크가 번져 있다.\n문도윤이 잉크 묻은 잔을 당신 반대쪽으로 돌린다.",
+  set:["ink"],
+  choices:[
+   ["문도윤에게 묻는다","critic"],
+   ["서고 중앙으로 돌아간다","hall"]
+  ]
+ },
+ critic:{
+  text:"문도윤이 장갑으로 잔을 감싼다.\n\n“순서가 틀리면 그 책은 기록이 아니라 거짓이 됩니다. 저는 검토만 했습니다. 책을 가져갈 이유는 없지요. 학생은 내내 복도에 있던데요.”",
+  choices:[["서고 중앙으로 돌아간다","hall"]]
+ },
+ records:{
+  text:"야간 출입 기록은 짧다.\n\n1:17 문도윤, 열람실.\n1:22 한서진, 열람실.\n1:40 유가은, 복도 벤치. 통화 표시가 한 시간 가까이 이어져 있다.",
+  set:["log","call"],
+  choices:[
+   ["유가은에게 묻는다","student"],
+   ["서고 중앙으로 돌아간다","hall"]
+  ]
+ },
+ student:{
+  text:"유가은이 통화 화면을 보여 준다. 1시 36분부터 2시 12분까지 어머니와의 통화다.\n\n“저는 열람실에 들어가지 못했어요. 복도 의자가 통화하기엔 조용해서요.”",
+  choices:[["서고 중앙으로 돌아간다","hall"]]
+ },
+ hall:{
+  text:"서고 중앙의 시계가 1시 55분을 가리킨다.\n관장이 유리 상자 옆에서 기다리고 있다. 더 살펴볼 수도 있고, 지금 사람을 지목할 수도 있다.",
+  choices:[
+   ["열람 테이블을 살핀다","tables"],
+   ["차 탁자로 간다","tea"],
+   ["출입 기록을 확인한다","records"],
+   ["범인을 지목한다","accuse"]
+  ]
+ },
+ accuse:{
+  text:"관장이 세 사람의 이름을 적는다.\n단서가 부족하면 지목은 추측이 된다.",
+  choices:[
+   ["한서진을 지목한다","endPoet","poet"],
+   ["유가은을 지목한다","endStudent","student"],
+   ["문도윤을 지목한다","endCritic","critic"]
+  ]
+ },
+ endPoet:{
+  ending:true,
+  text:"한서진은 찢긴 문장을 주워 노트에 옮겼을 뿐이다.\n그의 입장 시각은 문도윤보다 늦다.\n관장이 고개를 젓는다. 책은 여전히 나타나지 않는다."
+ },
+ endStudent:{
+  ending:true,
+  text:"유가은의 통화 기록은 복도에서 한 줄로 이어져 있다.\n열람실 출입 기록에는 그의 이름이 없다.\n관장이 학생을 돌려보내고, 수사는 원점이 된다."
+ },
+ endCritic:{
+  ending:true,
+  text:"문도윤의 차잔에는 색인의 푸른 잉크가 남아 있다.\n그는 1시 17분, 누구보다 먼저 열람실에 들어왔다.\n찢긴 문장은 잘못된 순서를 감추려는 그의 서평이었다.\n\n관장이 그의 가방에서 『청색 색인』을 꺼낸다. 첫 장만 빠져 있다."
+ },
+ endGuess:{
+  ending:true,
+  text:"이름은 맞지만 근거가 비어 있다.\n문도윤은 잉크가 원래 자신의 펜에서 묻은 것이라 주장하고, 관장은 지목을 받아들이지 않는다."
+ }
+};
+const state={flags:new Set(),scene:"start"};
+const sceneEl=document.getElementById("scene");
+const choiceEl=document.getElementById("choices");
+const clueEl=document.getElementById("clueList");
+
+function renderClues(){
+ const found=[...state.flags].filter(flag=>clues[flag]);
+ clueEl.replaceChildren();
+ if(!found.length){
+  const item=document.createElement("li");
+  item.className="empty";
+  item.textContent="아직 찾은 단서가 없습니다.";
+  clueEl.appendChild(item);
+  return;
+ }
+ found.forEach(flag=>{
+  const item=document.createElement("li");
+  item.textContent=clues[flag];
+  clueEl.appendChild(item);
+ });
+}
+function allowed(choice){
+ if(choice[2]==="poet") return state.flags.has("page");
+ if(choice[2]==="student") return state.flags.has("call");
+ if(choice[2]==="critic") return state.flags.has("ink")||state.flags.has("log");
+ return true;
+}
+function render(){
+ const scene=scenes[state.scene];
+ sceneEl.textContent=scene.text;
+ choiceEl.replaceChildren();
+ (scene.choices||[]).filter(allowed).forEach(choice=>{
+  const button=document.createElement("button");
+  button.type="button";
+  button.textContent=choice[0];
+  button.addEventListener("click",()=>choose(choice));
+  choiceEl.appendChild(button);
+ });
+ renderClues();
+}
+function choose(choice){
+ let next=choice[1];
+ if(next==="endCritic" && !(state.flags.has("ink")&&state.flags.has("log")&&state.flags.has("page"))) next="endGuess";
+ const scene=scenes[next];
+ (scene.set||[]).forEach(flag=>state.flags.add(flag));
+ state.scene=next;
+ render();
+}
+document.querySelector(".restart").addEventListener("click",()=>{
+ state.flags.clear();
+ state.scene="start";
+ render();
+});
+render();
+</script>
+</body>
+</html>
