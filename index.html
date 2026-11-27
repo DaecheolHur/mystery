@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="description" content="선택에 따라 결말이 갈리는 텍스트 추리 게임, 청색 색인.">
-<title>청색 색인 - 텍스트 추리</title>
+<meta name="description" content="시작할 때마다 다른 사건이 나오는 텍스트 추리 게임.">
+<title>야간 기록 - 텍스트 추리</title>
 <style>
 :root{--bg:#14110e;--panel:#221c17;--ink:#f4ead8;--muted:#c8b79a;--line:#3b3128;--accent:#e0a15a}
 *{box-sizing:border-box}
@@ -32,10 +32,10 @@ button{font:inherit}
 <div class="wrap">
 <header>
 <div>
-<h1>청색 색인</h1>
-<p>사라지기 전, 책의 첫 장이 찢겨 있었다.</p>
+<h1 id="title">야간 기록</h1>
+<p id="tagline">사건이 시작되기를 기다리는 중.</p>
 </div>
-<button class="restart" type="button">처음부터</button>
+<button class="restart" type="button">다른 사건</button>
 </header>
 <div class="layout">
 <article class="story">
@@ -49,98 +49,170 @@ button{font:inherit}
 </div>
 </div>
 <script>
-const clues={
- page:"찢긴 문장: 색인은 순서를 속인다.",
- ink:"비평가의 차잔에 푸른 잉크가 남아 있다.",
- log:"1시 17분, 문도윤이 열람실에 가장 먼저 들어왔다.",
- call:"유가은은 1시 40분까지 복도에서 통화 중이었다."
-};
-const scenes={
- start:{
-  text:"새벽 1시. 시립 기억 도서관의 유리 상자가 비어 있다.\n폐가 목록에만 남아 있던 『청색 색인』이 사라졌다.\n관장은 출입문을 잠그고 당신에게 한 시간을 준다.\n안에 남은 사람은 시인 한서진, 비평가 문도윤, 학생 유가은이다.",
-  choices:[
-   ["열람 테이블을 살핀다","tables"],
-   ["차 탁자로 간다","tea"],
-   ["출입 기록을 확인한다","records"]
-  ]
+const cases=[
+{
+ title:"청색 색인",
+ tagline:"사라지기 전, 책의 첫 장이 찢겨 있었다.",
+ intro:"새벽 1시. 시립 기억 도서관의 유리 상자가 비어 있다.\n폐가 목록에만 남아 있던 『청색 색인』이 사라졌다.\n관장은 출입문을 잠그고 당신에게 한 시간을 준다.\n안에 남은 사람은 시인 한서진, 비평가 문도윤, 학생 유가은이다.",
+ hall:"서고 중앙의 시계가 1시 55분을 가리킨다.\n더 살펴볼 수도 있고, 지금 사람을 지목할 수도 있다.",
+ required:["page","ink","log"],
+ culprit:"critic",
+ clues:{
+  page:"찢긴 문장: 색인은 순서를 속인다.",
+  ink:"비평가의 차잔에 푸른 잉크가 남아 있다.",
+  log:"1시 17분, 문도윤이 열람실에 가장 먼저 들어왔다.",
+  call:"유가은은 1시 40분까지 복도에서 통화 중이었다."
  },
- tables:{
-  text:"램프 아래에 노트 한 장이 남아 있다. 첫 문장이 찢겨 나갔고, 아랫줄만 읽힌다.\n\n“색인은 순서를 속인다.”\n\n창가의 한서진이 펜을 내려놓으며 당신을 본다.",
-  set:["page"],
-  choices:[
-   ["한서진에게 묻는다","poet"],
-   ["서고 중앙으로 돌아간다","hall"]
-  ]
+ places:[
+  {label:"열람 테이블을 살핀다",text:"램프 아래 노트의 첫 문장이 찢겨 있다. 아랫줄만 읽힌다.\n\n“색인은 순서를 속인다.”\n\n창가의 한서진이 펜을 내려놓는다.",set:["page"],talk:"한서진에게 묻는다",talkText:"한서진이 낮게 말한다.\n\n“나는 그 문장을 시에 베끼러 왔습니다. 책은 이미 없었어요. 문도윤 씨가 순서가 틀렸다고 크게 혼잣말을 했습니다.”"},
+  {label:"차 탁자로 간다",text:"차잔 둘 중 하나의 가장자리에 푸른 잉크가 번져 있다.\n문도윤이 그 잔을 당신 반대쪽으로 돌린다.",set:["ink"],talk:"문도윤에게 묻는다",talkText:"문도윤이 장갑으로 잔을 감싼다.\n\n“저는 검토만 했습니다. 학생은 내내 복도에 있던데요.”"},
+  {label:"출입 기록을 확인한다",text:"1:17 문도윤, 열람실.\n1:22 한서진, 열람실.\n1:40 유가은, 복도 벤치. 통화 표시가 길게 이어져 있다.",set:["log","call"],talk:"유가은에게 묻는다",talkText:"유가은이 통화 화면을 보여 준다.\n\n“1시 36분부터 어머니와 통화했어요. 열람실에는 들어가지 못했습니다.”"}
+ ],
+ people:[
+  {id:"poet",name:"한서진",need:"page",wrong:"한서진은 찢긴 문장을 주워 노트에 옮겼을 뿐이다.\n그의 입장 시각은 문도윤보다 늦다.\n관장이 고개를 젓는다."},
+  {id:"student",name:"유가은",need:"call",wrong:"유가은의 통화는 복도에서 한 줄로 이어져 있다.\n열람실 기록에는 그의 이름이 없다."},
+  {id:"critic",name:"문도윤",need:"ink",guess:"이름은 맞지만 근거가 비어 있다.\n문도윤은 잉크가 원래 자기 펜에서 묻은 것이라 버틴다.",truth:"문도윤의 차잔에는 색인의 푸른 잉크가 남아 있다.\n그는 누구보다 먼저 열람실에 들어왔다.\n찢긴 문장은 잘못된 순서를 감추려던 그의 서평이었다.\n\n관장이 가방에서 『청색 색인』을 꺼낸다. 첫 장만 빠져 있다."}
+ ]
+},
+{
+ title:"막차의 빈 칸",
+ tagline:"7호 칸에는 캐리어만 사라지고 없었다.",
+ intro:"부산행 막차가 대전을 지날 때, 7호 칸의 바이올린 케이스가 사라졌다.\n정차 시간은 4분이었다.\n칸 안에는 연주자 최이안, 승무원 박노을, 승객 정하람이 남아 있다.",
+ hall:"복도 끝의 도착 안내등이 깜빡인다.\n사람을 더 만나거나 지금 지목할 수 있다.",
+ required:["rosin","ticket","crew"],
+ culprit:"player",
+ clues:{
+  rosin:"케이스 손잡이에 바이올린 송진이 묻어 있다.",
+  ticket:"최이안의 이름으로 7호 칸 표가 두 장 끊혀 있다.",
+  crew:"정차 4분 동안 박노을은 1호 칸 방송실에 있었다.",
+  photo:"정하람의 창밖 사진에는 대전역 시계가 4분을 가리킨다."
  },
- poet:{
-  text:"한서진이 낮게 말한다.\n\n“나는 그 문장을 시에 베끼려고 왔을 뿐입니다. 책은 제가 도착했을 때 이미 없었습니다. 문도윤 씨가 색인 순서가 틀렸다고 크게 혼잣말을 하더군요.”",
-  choices:[["서고 중앙으로 돌아간다","hall"]]
+ places:[
+  {label:"7호 칸 좌석을 살핀다",text:"빈 선반 아래 손잡이 자국이 남았다. 끈끈한 송진 냄새다.\n최이안이 빈손을 무릎 위에 올린 채 앉아 있다.",set:["rosin"],talk:"최이안에게 묻는다",talkText:"최이안이 어깨를 으쓱한다.\n\n“악기는 서울에서 이미 부쳤습니다. 케이스는 빈 것이었어요.”"},
+  {label:"승차권 기록을 본다",text:"승차권 기록에는 최이안이 같은 좌석을 두 번 결제했다.\n하나는 본인, 하나는 이름 없는 추가 표다.",set:["ticket"],talk:"정하람에게 묻는다",talkText:"정하람이 휴대폰을 내민다.\n\n“저는 창밖만 찍었습니다. 대전역 시계가 사진에 나왔어요.”"},
+  {label:"방송실을 확인한다",text:"정차 4분의 방송 기록은 1호 칸에서 끊기지 않는다.\n박노을의 교대 서명이 그 시간에 찍혀 있다.",set:["crew","photo"],talk:"박노을에게 묻는다",talkText:"박노을이 교대 일지를 펼친다.\n\n“7호 칸에는 출발 전에만 들렀습니다. 정차 중에는 방송실이었습니다.”"}
+ ],
+ people:[
+  {id:"crewman",name:"박노을",need:"crew",wrong:"박노을의 방송 기록은 1호 칸에서 4분 내내 이어져 있다.\n7호 칸의 빈자리는 그의 손이 닿지 않았다."},
+  {id:"passenger",name:"정하람",need:"photo",wrong:"정하람의 사진은 정차 시각과 맞물린다.\n그는 창밖을 찍고 있었고, 선반에는 올라가지 않았다."},
+  {id:"player",name:"최이안",need:"rosin",guess:"송진만으로는 그가 케이스를 옮겼는지 알 수 없다.\n최이안은 빈 케이스를 부쳤을 뿐이라 주장한다.",truth:"손잡이의 송진은 그의 활에서 묻은 것이다.\n같은 좌석의 추가 표는 케이스를 사람처럼 태우기 위한 자리였다.\n\n보험 청구서의 분실 시각은 대전 정차 4분과 같다. 악기는 그의 코트 안 짐칸에 있다."}
+ ]
+},
+{
+ title:"마른 물감",
+ tagline:"전시장이 열리기 전, 겨울 창이 사라졌다.",
+ intro:"작은 화랑의 개막 한 시간 전, 그림 『겨울 창』이 벽에서 사라졌다.\n남은 사람은 작가 서미라, 화랑 주인 강태오, 모델 윤보배다.\n액자 못만 벽에 남아 있다.",
+ hall:"전시장 조명이 아직 절반만 켜져 있다.\n남은 자리를 보거나 지금 지목할 수 있다.",
+ required:["number","glove","film"],
+ culprit:"owner",
+ clues:{
+  number:"액자 뒤의 재고 번호가 방금 지워져 있다.",
+  glove:"강태오의 흰 장갑에 같은 푸른 물감이 묻어 있다.",
+  film:"서미라의 인터뷰 영상은 그림이 없어진 시간과 겹친다.",
+  sketch:"윤보배의 스케치북에는 오늘 자 연습 그림이 시간 순으로 남아 있다."
  },
- tea:{
-  text:"차잔이 두 개 남아 있다. 하나는 식어 있고, 다른 잔의 가장자리에는 푸른 잉크가 번져 있다.\n문도윤이 잉크 묻은 잔을 당신 반대쪽으로 돌린다.",
-  set:["ink"],
-  choices:[
-   ["문도윤에게 묻는다","critic"],
-   ["서고 중앙으로 돌아간다","hall"]
-  ]
+ places:[
+  {label:"빈 벽을 살핀다",text:"액자를 떼낸 자리에 재고 번호 스티커의 풀 자국이 남았다.\n번호는 지워졌지만 마지막 숫자 7이 번져 있다.",set:["number"],talk:"서미라에게 묻는다",talkText:"서미라가 촬영 영상을 틀어 준다.\n\n“그 시간에는 인터뷰 중이었습니다. 그림은 제 뒤에 아직 걸려 있었어요.”"},
+  {label:"작업실 탁자를 본다",text:"강태오가 장갑을 벗다 말고 주머니에 넣는다.\n장갑 엄지에 그림과 같은 푸른 물감이 묻어 있다.",set:["glove"],talk:"강태오에게 묻는다",talkText:"강태오가 목소리를 낮춘다.\n\n“물감은 어제 보수하며 묻었습니다. 그림을 옮길 이유는 없습니다.”"},
+  {label:"대기실을 확인한다",text:"윤보배의 스케치북은 오전 연습으로 가득하다.\n서미라의 영상 파일 시간은 분실 신고와 같은 10분이다.",set:["film","sketch"],talk:"윤보배에게 묻는다",talkText:"윤보배가 스케치북 모서리를 넘긴다.\n\n“저는 대기실에서 손을 풀고 있었어요. 전시장 불은 아직 꺼져 있었습니다.”"}
+ ],
+ people:[
+  {id:"artist",name:"서미라",need:"film",wrong:"서미라의 인터뷰 영상 속에서 그림은 아직 벽에 걸려 있다.\n그 시간, 그는 카메라 앞을 떠나지 못했다."},
+  {id:"model",name:"윤보배",need:"sketch",wrong:"윤보배의 스케치북은 대기실 시계와 같은 순서로 채워져 있다.\n전시장 쪽 발자국은 그의 신발이 아니다."},
+  {id:"owner",name:"강태오",need:"glove",guess:"물감만으로는 그가 그림을 내렸는지 알 수 없다.\n강태오는 어제 보수했다며 장갑을 접어 둔다.",truth:"재고 번호는 화랑 주인만 떼어 낼 수 있었다.\n장갑의 푸른 물감은 마른 그림이 아니라 오늘 아침의 가장자리에서 묻은 것이다.\n\n창고 포장지 속에서 『겨울 창』이 나온다. 위작 감정서를 가리려는 포장이었다."}
+ ]
+},
+{
+ title:"빈 보면대",
+ tagline:"초연 악보만 리허설 중간에 사라졌다.",
+ intro:"초연을 한 시간 앞두고 유일한 자필 악보가 보면대에서 사라졌다.\n작곡가 남시후, 배우 배그린, 조명 감독 오세결이 무대에 남아 있다.\n복사실은 이미 잠겨 있다.",
+ hall:"객석의 불이 하나둘 꺼진다.\n무대를 더 보거나 지금 지목할 수 있다.",
+ required:["pencil","booth","mic"],
+ culprit:"composer",
+ clues:{
+  pencil:"보면대 연필심이 남시후의 습관대로 왼쪽으로 기울어 있다.",
+  booth:"오세결의 조명 보드는 분실 시간 동안 기록이 끊기지 않는다.",
+  mic:"배그린의 핀마이크는 그 시간 내내 분장실을 녹음하고 있다.",
+  draft:"남시후의 가방에서 같은 곡의 미완성 사본이 보인다."
  },
- critic:{
-  text:"문도윤이 장갑으로 잔을 감싼다.\n\n“순서가 틀리면 그 책은 기록이 아니라 거짓이 됩니다. 저는 검토만 했습니다. 책을 가져갈 이유는 없지요. 학생은 내내 복도에 있던데요.”",
-  choices:[["서고 중앙으로 돌아간다","hall"]]
+ places:[
+  {label:"보면대를 살핀다",text:"악보 집게에는 연필 가루가 남아 있다.\n선은 하나같이 왼쪽으로 기울어 있다. 남시후의 악보 습관이다.",set:["pencil"],talk:"남시후에게 묻는다",talkText:"남시후가 빈 보면대를 두드린다.\n\n“완성본은 여기 올려 두었습니다. 미완성은 집에 있어요.”"},
+  {label:"조명 부스를 확인한다",text:"조명 로그는 1초도 비지 않는다.\n오세결의 큐 버튼이 분실 시간 내내 눌려 있다.",set:["booth"],talk:"오세결에게 묻는다",talkText:"오세결이 헤드셋을 벗는다.\n\n“저는 부스에서 큐만 봤습니다. 무대 악보에는 손이 닿지 않아요.”"},
+  {label:"분장실 녹음을 듣는다",text:"배그린의 핀마이크는 분장실 문을 닫는 소리까지 담고 있다.\n남시후의 가방 지퍼 사이로 같은 곡의 미완성 사본이 보인다.",set:["mic","draft"],talk:"배그린에게 묻는다",talkText:"배그린이 녹음 파일을 재생한다.\n\n“의상을 고치고 있었어요. 보면대는 영상 속 제 뒤가 아닙니다.”"}
+ ],
+ people:[
+  {id:"light",name:"오세결",need:"booth",wrong:"오세결의 조명 큐는 부스 안에서 끊기지 않는다.\n보면대까지 내려올 틈이 없다."},
+  {id:"actor",name:"배그린",need:"mic",wrong:"배그린의 핀마이크는 분장실에 그를 묶어 둔다.\n무대 악보를 접을 시간은 녹음에 없다."},
+  {id:"composer",name:"남시후",need:"pencil",guess:"연필 기울기만으로는 악보를 누가 가져갔는지 단정할 수 없다.\n남시후는 습관일 뿐이라 말한다.",truth:"왼쪽으로 기운 연필은 그의 수정 자국이다.\n가방의 미완성 사본은 오늘 아침에 인쇄되었다.\n\n완성본은 피아노 의자 아래에 있다. 초연 전에 빈칸을 메우려던 흔적이다."}
+ ]
+},
+{
+ title:"옥상 열쇠",
+ tagline:"관리실 꾸러미에서 옥상 열쇠만 빠졌다.",
+ intro:"아파트 옥상 창고의 열쇠가 관리실 꾸러미에서 사라졌다.\n창고에는 주민 분실물이 잠겨 있다.\n관리인 피수영, 301호 라현, 택배 기사 고다인이 1층에 있다.",
+ hall:"엘리베이터 문이 1층에서 열려 있다.\n더 확인하거나 지금 지목할 수 있다.",
+ required:["ring","book","camera"],
+ culprit:"keeper",
+ clues:{
+  ring:"열쇠 꾸러미의 옥상 고리만 새로 벌어져 있다.",
+  book:"관리 장부의 오늘 서명이 두 번 겹쳐 있다.",
+  camera:"고다인의 배송 사진은 분실 시각과 같은 현관 앞이다.",
+  phone:"라현의 인터폰에는 집 안에서 받은 기록이 남아 있다."
  },
- records:{
-  text:"야간 출입 기록은 짧다.\n\n1:17 문도윤, 열람실.\n1:22 한서진, 열람실.\n1:40 유가은, 복도 벤치. 통화 표시가 한 시간 가까이 이어져 있다.",
-  set:["log","call"],
-  choices:[
-   ["유가은에게 묻는다","student"],
-   ["서고 중앙으로 돌아간다","hall"]
-  ]
+ places:[
+  {label:"열쇠 꾸러미를 본다",text:"다른 열쇠는 그대로다. 옥상 열쇠가 걸린 고리만 바깥으로 벌어져 있다.\n피수영이 꾸러미를 서랍 안으로 민다.",set:["ring"],talk:"피수영에게 묻는다",talkText:"피수영이 서랍을 닫는다.\n\n“아침에 점검하고 다시 걸었습니다. 주민은 열쇠가 필요 없어요.”"},
+  {label:"관리 장부를 펼친다",text:"오늘 날짜의 서명이 한 줄 아래에 다시 겹쳐 있다.\n윗줄은 지워졌고, 아랫줄만 피수영의 필적이다.",set:["book"],talk:"라현에게 묻는다",talkText:"라현이 인터폰 기록을 보여 준다.\n\n“그 시간에는 집에서 택배를 기다리고 있었어요. 옥상은 가 본 적이 없습니다.”"},
+  {label:"현관 기록을 확인한다",text:"고다인의 배송 사진은 현관 시계와 맞다.\n라현의 인터폰은 집 안에서 받은 기록만 남아 있다.",set:["camera","phone"],talk:"고다인에게 묻는다",talkText:"고다인이 배송 완료 화면을 돌린다.\n\n“1층에서 사진 찍고 바로 다음 동으로 갔습니다. 옥상 문은 제 동선이 아니에요.”"}
+ ],
+ people:[
+  {id:"resident",name:"라현",need:"phone",wrong:"라현의 인터폰은 집 안에서 응답한 기록이다.\n옥상 문과는 층이 다르다."},
+  {id:"courier",name:"고다인",need:"camera",wrong:"고다인의 배송 사진은 현관 앞에서 끝난다.\n옥상으로 올라간 엘리베이터 기록은 없다."},
+  {id:"keeper",name:"피수영",need:"ring",guess:"벌어진 고리만으로는 열쇠를 누가 뺐는지 단정하기 어렵다.\n피수영은 아침 점검 자국이라 말한다.",truth:"고리는 오늘 오후에 벌어졌고, 겹쳐 쓴 서명은 그 시간을 덮으려는 것이다.\n옥상 열쇠는 관리인 외에는 장부에서 빠지지 않는다.\n\n창고 상자 안에서 열쇠가 나온다. 접수하지 않은 분실물 목록을 가리려는 자리였다."}
+ ]
+},
+{
+ title:"잠기지 않은 서랍",
+ tagline:"서명 직전의 계약서만 서랍에서 빠졌다.",
+ intro:"디자인 스튜디오의 서랍이 열려 있고, 방금 인쇄한 계약서만 없다.\n대표 구도원, 디자이너 메아리, 손님 차린이 사무실에 남아 있다.\n프린터는 아직 따뜻하다.",
+ hall:"회의실 유리 너머로 빈 서랍이 보인다.\n더 찾거나 지금 지목할 수 있다.",
+ required:["memo","printer","lobby"],
+ culprit:"boss",
+ clues:{
+  memo:"계약서 자리에 구도원의 수정 메모만 남아 있다.",
+  printer:"메아리의 출력 기록은 같은 시각 3층 프린터에 있다.",
+  lobby:"차린의 대기 번호는 로비에서 아직 호출 전이다.",
+  clause:"메모에는 위약 조항을 빼자는 문장이 적혀 있다."
  },
- student:{
-  text:"유가은이 통화 화면을 보여 준다. 1시 36분부터 2시 12분까지 어머니와의 통화다.\n\n“저는 열람실에 들어가지 못했어요. 복도 의자가 통화하기엔 조용해서요.”",
-  choices:[["서고 중앙으로 돌아간다","hall"]]
- },
- hall:{
-  text:"서고 중앙의 시계가 1시 55분을 가리킨다.\n관장이 유리 상자 옆에서 기다리고 있다. 더 살펴볼 수도 있고, 지금 사람을 지목할 수도 있다.",
-  choices:[
-   ["열람 테이블을 살핀다","tables"],
-   ["차 탁자로 간다","tea"],
-   ["출입 기록을 확인한다","records"],
-   ["범인을 지목한다","accuse"]
-  ]
- },
- accuse:{
-  text:"관장이 세 사람의 이름을 적는다.\n단서가 부족하면 지목은 추측이 된다.",
-  choices:[
-   ["한서진을 지목한다","endPoet","poet"],
-   ["유가은을 지목한다","endStudent","student"],
-   ["문도윤을 지목한다","endCritic","critic"]
-  ]
- },
- endPoet:{
-  ending:true,
-  text:"한서진은 찢긴 문장을 주워 노트에 옮겼을 뿐이다.\n그의 입장 시각은 문도윤보다 늦다.\n관장이 고개를 젓는다. 책은 여전히 나타나지 않는다."
- },
- endStudent:{
-  ending:true,
-  text:"유가은의 통화 기록은 복도에서 한 줄로 이어져 있다.\n열람실 출입 기록에는 그의 이름이 없다.\n관장이 학생을 돌려보내고, 수사는 원점이 된다."
- },
- endCritic:{
-  ending:true,
-  text:"문도윤의 차잔에는 색인의 푸른 잉크가 남아 있다.\n그는 1시 17분, 누구보다 먼저 열람실에 들어왔다.\n찢긴 문장은 잘못된 순서를 감추려는 그의 서평이었다.\n\n관장이 그의 가방에서 『청색 색인』을 꺼낸다. 첫 장만 빠져 있다."
- },
- endGuess:{
-  ending:true,
-  text:"이름은 맞지만 근거가 비어 있다.\n문도윤은 잉크가 원래 자신의 펜에서 묻은 것이라 주장하고, 관장은 지목을 받아들이지 않는다."
- }
-};
+ places:[
+  {label:"열린 서랍을 살핀다",text:"계약서가 있던 칸에는 구도원의 메모만 남아 있다.\n문장은 짧다. 위약 조항을 빼자는 내용이다.",set:["memo","clause"],talk:"구도원에게 묻는다",talkText:"구도원이 메모를 접으려다 멈춘다.\n\n“초안을 다듬자고 적어 둔 겁니다. 원본은 손님이 가져갔을 수 있어요.”"},
+  {label:"프린터 기록을 본다",text:"이 층 프린터는 한 시간째 조용하다.\n메아리의 사원 카드는 같은 시각 3층 출력실에 찍혀 있다.",set:["printer"],talk:"메아리에게 묻는다",talkText:"메아리가 사원 카드 기록을 보여 준다.\n\n“시안을 뽑으러 3층에 있었어요. 서랍 비밀번호는 모릅니다.”"},
+  {label:"로비 대기를 확인한다",text:"차린의 대기 번호는 아직 호출 전이다.\n로비 의자의 접수 시각이 분실 신고보다 이르다.",set:["lobby"],talk:"차린에게 묻는다",talkText:"차린이 대기표를 들어 보인다.\n\n“회의실에는 아직 못 들어갔습니다. 계약서는 본 적도 없어요.”"}
+ ],
+ people:[
+  {id:"designer",name:"메아리",need:"printer",wrong:"메아리의 카드는 3층 출력실에 머물러 있다.\n서랍이 있는 회의실과는 층이 다르다."},
+  {id:"guest",name:"차린",need:"lobby",wrong:"차린의 대기 번호는 로비에서 호출되지 않았다.\n그는 계약서가 있는 방까지 들어오지 못했다."},
+  {id:"boss",name:"구도원",need:"memo",guess:"메모만으로는 원본을 누가 뺐는지 알 수 없다.\n구도원은 초안을 고치자고 적은 것이라 말한다.",truth:"메모의 위약 조항은 그가 빼려던 문장이다.\n서랍 비밀번호를 아는 사람은 대표뿐이다.\n\n그의 코트 안주머니에서 접힌 계약서가 나온다. 서명은 아직 비어 있다."}
+ ]
+}
+];
+
+let current=null;
 const state={flags:new Set(),scene:"start"};
 const sceneEl=document.getElementById("scene");
 const choiceEl=document.getElementById("choices");
 const clueEl=document.getElementById("clueList");
 
+function pickCase(){
+ const last=sessionStorage.getItem("mystery-last");
+ const pool=cases.filter(item=>item.title!==last);
+ const raw=new URLSearchParams(location.search).get("case");
+ const requested=raw===null?NaN:Number(raw);
+ const chosen=Number.isInteger(requested)&&cases[requested]?cases[requested]:pool[Math.floor(Math.random()*pool.length)];
+ sessionStorage.setItem("mystery-last",chosen.title);
+ return chosen;
+}
 function renderClues(){
- const found=[...state.flags].filter(flag=>clues[flag]);
+ const found=[...state.flags].filter(flag=>current.clues[flag]);
  clueEl.replaceChildren();
  if(!found.length){
   const item=document.createElement("li");
@@ -151,43 +223,80 @@ function renderClues(){
  }
  found.forEach(flag=>{
   const item=document.createElement("li");
-  item.textContent=clues[flag];
+  item.textContent=current.clues[flag];
   clueEl.appendChild(item);
  });
 }
-function allowed(choice){
- if(choice[2]==="poet") return state.flags.has("page");
- if(choice[2]==="student") return state.flags.has("call");
- if(choice[2]==="critic") return state.flags.has("ink")||state.flags.has("log");
- return true;
+function sceneText(){
+ if(state.scene==="start") return current.intro;
+ if(state.scene==="hall") return current.hall;
+ if(state.scene==="accuse") return "이름을 적기 전에, 가지고 있는 단서를 헤아려 본다.";
+ const place=current.places.find(item=>item.label===state.scene);
+ if(place) return place.text;
+ const person=current.people.find(item=>item.id===state.scene);
+ if(person) return state.endingText;
+ const talk=current.places.find(item=>item.talk===state.scene);
+ return talk?talk.talkText:"";
+}
+function objectParticle(name){
+ const code=name.charCodeAt(name.length-1);
+ if(code<0xac00||code>0xd7a3) return "을";
+ return (code-0xac00)%28===0?"를":"을";
+}
+function choices(){
+ if(current.people.some(person=>person.id===state.scene)) return [["다른 사건 시작","__restart"]];
+ if(state.scene==="start"||state.scene==="hall"){
+  const items=current.places.map(place=>[place.label,place.label]);
+  if(state.scene==="hall") items.push(["범인을 지목한다","accuse"]);
+  return items;
+ }
+ if(current.places.some(place=>place.label===state.scene)){
+  const place=current.places.find(item=>item.label===state.scene);
+  return [[place.talk,place.talk],["중앙으로 돌아간다","hall"]];
+ }
+ if(state.scene==="accuse"){
+  const suspects=current.people.filter(person=>state.flags.has(person.need));
+  if(!suspects.length) return [["단서가 더 필요하다","hall"]];
+  return suspects.map(person=>[`${person.name}${objectParticle(person.name)} 지목한다`,person.id]);
+ }
+ return [["다른 곳을 살핀다","hall"]];
 }
 function render(){
- const scene=scenes[state.scene];
- sceneEl.textContent=scene.text;
+ sceneEl.textContent=sceneText();
  choiceEl.replaceChildren();
- (scene.choices||[]).filter(allowed).forEach(choice=>{
+ choices().forEach(choice=>{
   const button=document.createElement("button");
   button.type="button";
   button.textContent=choice[0];
-  button.addEventListener("click",()=>choose(choice));
+  button.addEventListener("click",()=>choose(choice[1]));
   choiceEl.appendChild(button);
  });
  renderClues();
 }
-function choose(choice){
- let next=choice[1];
- if(next==="endCritic" && !(state.flags.has("ink")&&state.flags.has("log")&&state.flags.has("page"))) next="endGuess";
- const scene=scenes[next];
- (scene.set||[]).forEach(flag=>state.flags.add(flag));
+function choose(next){
+ if(next==="__restart"){startGame();return}
+ const place=current.places.find(item=>item.label===next);
+ if(place) (place.set||[]).forEach(flag=>state.flags.add(flag));
+ const person=current.people.find(item=>item.id===next);
+ if(person){
+  const proven=current.required.every(flag=>state.flags.has(flag));
+  state.endingText=person.id===current.culprit?(proven?person.truth:person.guess):person.wrong;
+ }
  state.scene=next;
  render();
 }
-document.querySelector(".restart").addEventListener("click",()=>{
+function startGame(){
+ current=pickCase();
+ document.getElementById("title").textContent=current.title;
+ document.getElementById("tagline").textContent=current.tagline;
+ document.title=current.title+" - 텍스트 추리";
  state.flags.clear();
  state.scene="start";
+ state.endingText="";
  render();
-});
-render();
+}
+document.querySelector(".restart").addEventListener("click",startGame);
+startGame();
 </script>
 </body>
 </html>
